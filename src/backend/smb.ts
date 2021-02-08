@@ -2,7 +2,7 @@ import {exec} from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 
-const MOUNT_PATH = '/home/david/mnt/smb'
+const MOUNT_PATH = '/mnt'
 
 export async function smbMount(url: string, type: string, triedResolving = false) {
     url = url.replace(/^smb:/, '')
