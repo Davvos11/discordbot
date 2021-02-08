@@ -19,7 +19,7 @@ export abstract class Smb {
         } catch (e) {
             return  command.channel.send(`Error \`${e}\``)
         }
-        return command.channel.send(`Mounted \`${url}\``)
+        return command.channel.send(`Mounted! It should now become visible on https://plex.dovatvis.nl`)
     }
 }
 
