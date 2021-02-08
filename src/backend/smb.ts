@@ -1,7 +1,8 @@
 import {exec} from "child_process";
 import * as fs from "fs";
+import * as path from "path";
 
-const MOUNT_PATH = '/mnt'
+const MOUNT_PATH = '/home/david/mnt/smb'
 
 export async function smbMount(url: string, type?: string) {
     if (type !== 'movie') {
@@ -55,10 +56,37 @@ async function createMountPoint(location) {
 
 async function removeMountPoint(location) {
     if (fs.existsSync(location)) {
-        await fs.rmdir(location, (err => {
-            if (err)
-                throw err
-        }))
+        await removeEmptyDirectories(location)
     }
-    //TODO remove empty parents recursively
+}
+
+/**
+ * Colonised from https://gist.github.com/fixpunkt/fe32afe14fbab99d9feb4e8da7268445
+ * @param directory
+ */
+async function removeEmptyDirectories(directory: string) {
+    // lstat does not follow symlinks (in contrast to stat)
+    const fileStats = await fs.promises.lstat(directory);
+    if (!fileStats.isDirectory()) {
+        return;
+    }
+    let fileNames = await fs.promises.readdir(directory);
+    if (fileNames.length > 0) {
+        const recursiveRemovalPromises = fileNames.map(
+            (fileName) => removeEmptyDirectories(path.join(directory, fileName)),
+        );
+        await Promise.all(recursiveRemovalPromises);
+
+        // re-evaluate fileNames; after deleting subdirectory
+        // we may have parent directory empty now
+        fileNames = await fs.promises.readdir(directory);
+    }
+
+    if (fileNames.length === 0) {
+        console.log('Removing: ', directory);
+        await fs.promises.rmdir(directory);
+    }
+
+    // Go up a directory
+    await removeEmptyDirectories(path.dirname(directory))
 }
