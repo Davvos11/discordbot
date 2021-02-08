@@ -13,4 +13,4 @@ RUN npm ci --only=production
 # Bundle app source
 COPY . .
 
-CMD [ "npm", "run", "production" ]
+CMD [ "npm", "start"]

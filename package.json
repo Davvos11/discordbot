@@ -6,7 +6,6 @@
   "scripts": {
     "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
     "build": "tsc",
-    "production": "npm run build && node .",
     "prestart": "npm run prebuild",
     "start": "ts-node ./src/main.ts",
     "root-start": "sudo npm run start",
