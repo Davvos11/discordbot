@@ -1,9 +1,17 @@
-import {ArgsOf, Client, Discord, On} from "@typeit/discord";
+import {ArgsOf, Client, Command, CommandMessage, Discord, On} from "@typeit/discord";
+import {smbMount} from "./backend/smb";
 
-@Discord()
+@Discord("!")
 abstract class AppDiscord {
-    @On("message")
-    private onMessage([message]: ArgsOf<"message">, client: Client, guardPayload: any) {
-        console.log(message)
+    @Command("smb")
+    private async smb(command: CommandMessage){
+        const url = command.content.replace(`${command.prefix}${command.commandName}` , '').trim()
+
+        try {
+            await smbMount(url)
+        } catch (e) {
+            return  command.channel.send(`Error \`${e}\``)
+        }
+        return command.channel.send(`Mounted \`${url}\``)
     }
 }
