@@ -13,4 +13,7 @@ RUN npm ci --only=production
 # Bundle app source
 COPY . .
 
+# Install cifs-utils so we can mount smb shares
+RUN apt update -y && apt install cifs-utils -y
+
 CMD [ "npm", "start"]
