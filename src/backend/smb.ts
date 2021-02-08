@@ -70,23 +70,15 @@ async function removeEmptyDirectories(directory: string) {
     if (!fileStats.isDirectory()) {
         return;
     }
-    let fileNames = await fs.promises.readdir(directory);
-    if (fileNames.length > 0) {
-        const recursiveRemovalPromises = fileNames.map(
-            (fileName) => removeEmptyDirectories(path.join(directory, fileName)),
-        );
-        await Promise.all(recursiveRemovalPromises);
-
-        // re-evaluate fileNames; after deleting subdirectory
-        // we may have parent directory empty now
-        fileNames = await fs.promises.readdir(directory);
-    }
+    const fileNames = await fs.promises.readdir(directory);
 
     if (fileNames.length === 0) {
         console.log('Removing: ', directory);
         await fs.promises.rmdir(directory);
     }
 
-    // Go up a directory
-    await removeEmptyDirectories(path.dirname(directory))
+    // Go up a directory (if needed)
+    const parent = path.dirname(directory)
+    if (!path.relative(parent, MOUNT_PATH).includes('..'))
+        await removeEmptyDirectories(path.dirname(directory))
 }
