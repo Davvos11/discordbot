@@ -4,12 +4,13 @@ import * as path from "path";
 
 const MOUNT_PATH = '/home/david/mnt/smb'
 
-export async function smbMount(url: string, type?: string) {
-    if (type !== 'movie') {
-        type = 'tv'
-    }
-
+export async function smbMount(url: string, type: string) {
     url = url.replace(/^smb:/, '')
+
+    // If it seems to be a file instead of a dir, use the parent
+    if (url.match(/\.\S{2,3}$/).length > 0) {
+        url = url.replace(/\/[^\/]+$/, '')
+    }
 
     const name = url.replace(/\/\//, '')
     const location = `${MOUNT_PATH}/${type}/${name}`
@@ -45,7 +46,7 @@ export async function smbMount(url: string, type?: string) {
     }))
 }
 
-async function createMountPoint(location) {
+async function createMountPoint(location: string) {
     if (!fs.existsSync(location)) {
         await fs.mkdir(location, {recursive: true}, (err => {
             if (err)
