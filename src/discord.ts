@@ -1,17 +1,13 @@
-import {ArgsOf, Client, Command, CommandMessage, Discord, On} from "@typeit/discord";
-import {smbMount} from "./backend/smb";
+import {Discord} from "@typeit/discord";
+import * as Path from "path";
 
-@Discord("!")
+@Discord("!", {
+    import: [
+        Path.join(__dirname,  "commands", "*.ts"),
+        Path.join(__dirname,  "events", "*.ts")
+        // You can also specify the class directly here if you don't want to use a glob
+    ]
+})
 abstract class AppDiscord {
-    @Command("smb")
-    private async smb(command: CommandMessage){
-        const url = command.content.replace(`${command.prefix}${command.commandName}` , '').trim()
 
-        try {
-            await smbMount(url)
-        } catch (e) {
-            return  command.channel.send(`Error \`${e}\``)
-        }
-        return command.channel.send(`Mounted \`${url}\``)
-    }
 }
