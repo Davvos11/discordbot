@@ -4,6 +4,7 @@ import {DMChannel, NewsChannel, TextChannel} from "discord.js";
 
 const MOVIE = '🎞️'
 const SERIES = '📺'
+const COMBINING = '⃣'
 
 export abstract class Smb {
     private mounts: string[] = []
@@ -15,10 +16,12 @@ export abstract class Smb {
 
         // Ask the type of the content
         const type = await getType(command.channel)
+        // Ask the name of the content
+        const name = await getName(command.channel, url)
 
         try {
             // Try to mount
-            const location = await smbMount(url, type)
+            const location = await smbMount(url, type, name)
             // Save the mounted location
             this.mounts.push(location)
         } catch (e) {
@@ -30,9 +33,9 @@ export abstract class Smb {
     @Command("list")
     private async list(command: CommandMessage) {
         // Create list of mounts
-        let list = "List of mounts:\n"
+        let list = "List of mounts:"
         this.mounts.forEach(((value, index) => {
-            list += `${index}: ${value}`
+            list += `\n${index}: ${value}`
         }))
         // Send to channel
         return command.channel.send(list)
@@ -78,4 +81,35 @@ async function getType(channel: TextChannel | DMChannel | NewsChannel) {
             // Haha recursion go brrr
             return getType(channel)
     }
+}
+
+async function getName(channel: TextChannel | DMChannel | NewsChannel, url: string) {
+    // Get names:
+    let names = "";
+    const folders = url.replace(/^[^\/]*\/\//, '').split('/')
+    folders.slice(1).forEach(((value, index) => {
+        names += `\n${index}: ${value}`
+    }))
+
+    const emoji = folders.slice(1).map((value, index) => {return `${index}${COMBINING}`})
+
+    // Ask question
+    const message = await channel.send(`What is the name? ${names}`)
+    const collector = message.createReactionCollector((r) => emoji.includes(r.emoji.name))
+
+    // Add reactions
+    await Promise.all(
+        emoji.map((value => message.react(value)))
+    )
+
+    // Wait until the user adds a reaction
+    const reaction = await collector.next
+    console.log(reaction.emoji.name)
+    collector.stop()
+
+    const i = Number(reaction.emoji.name.substring(0, 1)) + 1
+    let name = `${folders[i]} [${folders.slice(0, i)}]`
+    folders.slice(i+1).forEach((value => {name += `/${value}`}))
+
+    return name
 }
