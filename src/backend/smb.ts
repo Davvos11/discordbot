@@ -5,6 +5,10 @@ import * as path from "path";
 const MOUNT_PATH = '/mnt'
 
 export async function smbMount(url: string, type: string, triedResolving = false) {
+    if (triedResolving) {
+        console.log(`Trying ${url}`)
+    }
+
     url = url.replace(/^smb:/, '')
 
     // If it seems to be a file instead of a dir, use the parent
@@ -26,8 +30,9 @@ export async function smbMount(url: string, type: string, triedResolving = false
     child.stderr.on('data', data => stderr += data)
 
     // Return a promise that handles errors and returning
-    return new Promise<number>(((resolve, reject) => {
+    return new Promise<string>(((resolve, reject) => {
         child.on('error', (err => {
+            console.error(err.message)
             // Remove created mount point
             removeMountPoint(location)
             // Throw error
@@ -35,9 +40,11 @@ export async function smbMount(url: string, type: string, triedResolving = false
         }))
         child.on('exit', code => {
             if (code === 0) {
-                // Return successfully
-                resolve(code)
+                console.log(`Mounted: ${location}`)
+                // Return the mount path
+                return resolve(location)
             } else {
+                console.error(stderr)
                 // Remove created mount point
                 removeMountPoint(location)
                 // Check the error type
@@ -66,6 +73,37 @@ async function removeMountPoint(location) {
     if (fs.existsSync(location)) {
         await removeEmptyDirectories(location)
     }
+}
+
+export async function unmount(location) {
+    // Try to unmount
+    const child = exec(`umount "${location}"`)
+
+    // Pipe stderr to a variable, so we can return some error information if needed
+    let stderr = ''
+    child.stderr.on('data', data => stderr += data)
+
+    // Return a promise that handles errors and returning
+    return new Promise<void>(((resolve, reject) => {
+        child.on('error', (err => {
+            console.error(err.message)
+            // Throw error
+            reject(err.message)
+        }))
+        child.on('exit', code => {
+            if (code === 0) {
+                console.log(`Unmounted: "${location}"`)
+                // Remove path
+                removeMountPoint(location)
+                // Return
+                return resolve()
+            } else {
+                console.error(stderr)
+                // Throw error
+                reject(stderr)
+            }
+        })
+    }))
 }
 
 /**
