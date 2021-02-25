@@ -28,7 +28,7 @@ export abstract class Garbage {
     }
 }
 
-function formatData(data: [garbageData]) {
+function formatData(data: garbageData[]) {
     return new MessageEmbed()
         .setTitle("Afvalkalender")
         .setURL("https://www.twentemilieu.nl/enschede/afval/afvalkalender")
@@ -60,6 +60,11 @@ export async function garbageNotifications(client: Client) {
     const d = new Date()
     d.setDate(d.getDate() + 1)
     const pickups = await getPickups(new Date(), d)
+
+    // Check if there are any pickups
+    if (pickups.length === 0) {
+        return
+    }
 
     const message = `${pickups.map(v => colourToTitle(v.type)).join(', ')} aan de weg zetten!`
 

@@ -12,8 +12,6 @@ const SQL_SCRIPT_LOCATION = path.join(path.dirname('..'), 'create-tables.sql')
 
 const readFile = util.promisify(fs.readFile);
 
-export type sortOptions = "time" | "timestamp" | "name"
-
 export class DbConnection {
     private db: Database | undefined;
     private dbLocation: string;

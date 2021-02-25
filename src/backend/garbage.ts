@@ -11,7 +11,7 @@ curl -XPOST https://twentemilieuapi.ximmio.com/api/FetchAdress -H "Content-Type:
 
 // Format of API response
 type data = {
-    pickupDates: [string],
+    pickupDates: string[],
     pickupType: number,
     _pickupType: number,
     _pickupTypeText: string,
@@ -28,12 +28,12 @@ export async function getPickups(startDate: Date, endDate: Date) {
         endDate: dateFormat(endDate, "yyyy-mm-dd")
     })
 
-    const pickups = response.data.dataList as [data]
+    const pickups = response.data.dataList as data[]
 
-    return processData(pickups) as [garbageData]
+    return processData(pickups) as garbageData[]
 }
 
-function processData(pickups: [data]) {
+function processData(pickups: data[]) {
     const result = []
 
     // Extract information for each date
