@@ -1,7 +1,10 @@
-import {Command, CommandMessage} from "@typeit/discord";
+import {Client, Command, CommandMessage} from "@typeit/discord";
 import {garbageData, getPickups} from "../backend/garbage";
-import {MessageEmbed} from "discord.js";
+import {MessageEmbed, TextChannel} from "discord.js";
 import dateFormat from "dateformat";
+import {DbConnection} from "../database";
+
+const db = new DbConnection()
 
 export abstract class Garbage {
     @Command("afval")
@@ -15,6 +18,14 @@ export abstract class Garbage {
         const embed = formatData(pickups)
         await command.channel.send(embed)
     }
+
+    @Command("afvalsubscribe")
+    private async subscribe(command: CommandMessage) {
+        // Save the channel ID to the database
+        await db.addGarbageChannel(command.channel.id)
+        // Send a return message
+        await command.channel.send("This channel will now receive garbage pickup updates")
+    }
 }
 
 function formatData(data: [garbageData]) {
@@ -22,23 +33,43 @@ function formatData(data: [garbageData]) {
         .setTitle("Afvalkalender")
         .setURL("https://www.twentemilieu.nl/enschede/afval/afvalkalender")
         .addFields(data.map((value) => {
-            return {name: colourToTitle(value.type), value: `**${dateFormat(value.date, "ddd dd-mm-yy")}**\n${value.description}`}
+            return {name: colourToTitle(value.type, true),
+                value: `**${dateFormat(value.date, "ddd dd-mm-yy")}**\n${value.description}`}
         }))
 }
 
-function colourToTitle(colour: string) {
+function colourToTitle(colour: string, emoji = false) {
     switch (colour) {
         case "GREY":
-            return ":white_large_square: Restafval";
+            return `${emoji ? ":white_large_square: " : ""}Restafval`;
         case "GREEN":
-            return ":green_square: GFT";
+            return `${emoji ? ":green_square: " : ""}GFT`;
         case "PAPER":
-            return ":blue_square: Papier";
+            return `${emoji ? ":blue_square: " : ""}Papier`;
         case "PACKAGES":
-            return ":orange_square: Verpakkingen";
+            return `${emoji ? ":orange_square: " : ""}Verpakkingen`;
         case "TREE":
-            return ":christmas_tree: Kerstbomen"
+            return `${emoji ? ":christmas_tree: " : ""}Kerstbomen`;
         default:
-            return ":grey_question: " + colour
+            return `${emoji ? ":grey_question: " : ""}${colour}`;
     }
+}
+
+export async function garbageNotifications(client: Client) {
+    // Fetch pickups for today and tomorrow
+    const d = new Date()
+    d.setDate(d.getDate() + 1)
+    const pickups = await getPickups(new Date(), d)
+
+    const message = `${pickups.map(v => colourToTitle(v.type)).join(', ')} aan de weg zetten!`
+
+    // Get channels that want notifications
+    const channels = await db.getGarbageChannels()
+    channels.forEach((id) => {
+        // Get channel object
+        const channel = client.channels.cache.get(id)
+        if (channel.isText()) {
+            (channel as TextChannel).send(message)
+        }
+    })
 }
