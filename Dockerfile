@@ -4,7 +4,7 @@ FROM node
 WORKDIR /usr/src/app
 
 # Install cifs-utils so we can mount smb shares
-RUN apt update -y && apt install cifs-utils -y
+RUN apt-get update -y && apt-get install cifs-utils -y
 
 # Install app dependencies
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
