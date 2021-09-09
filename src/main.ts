@@ -28,7 +28,7 @@ async function start() {
     console.log("Connected!")
 
     // Start notification cron-jobs
-    new cron.CronJob("0 20 * * 0", () => {
+    new cron.CronJob("0 20 * * *", () => {
         garbageNotifications(client)
     }).start()
 }
